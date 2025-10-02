@@ -1,22 +1,18 @@
-// server/index.js
-import express from "express";
-import nodemailer from "nodemailer";
+import express, { Request, Response, NextFunction, RequestHandler } from "express";
+import nodemailer, { Transporter } from "nodemailer";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
-import { body, validationResult } from "express-validator";
+import { body, validationResult, ValidationChain } from "express-validator";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 
-// For __dirname equivalent in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load environment variables
 dotenv.config();
 
-// Required environment variables
 const requiredEnvVars = ['GMAIL_USER', 'GMAIL_APP_PASSWORD'];
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
@@ -28,21 +24,19 @@ if (missingEnvVars.length > 0) {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Security middleware
 app.use(helmet());
-// CORS configuration
+
 const allowedOrigins = process.env.NODE_ENV === "production"
   ? process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : ['https://medicare-plus.vercel.app'] // Default production origin
+    : ['https://medicare-plus.vercel.app']
   : ['http://localhost:5173', 'http://localhost:3000'];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
-      
+
       if (allowedOrigins.indexOf(origin) === -1) {
         const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
         return callback(new Error(msg), false);
@@ -52,14 +46,13 @@ app.use(
     credentials: true,
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    maxAge: 86400, // 24 hours
+    maxAge: 86400,
   })
 );
 
-// Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   message: {
     error: "Too many requests from this IP, please try again later.",
   },
@@ -67,17 +60,26 @@ const limiter = rateLimit({
 
 app.use("/api/contact", limiter);
 
-// Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Serve static files in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../dist")));
 }
 
-// Email configuration
-const createTransporter = async () => {
+interface ContactFormData {
+  name: string;
+  email: string;
+  phone?: string;
+  subject?: string;
+  message?: string;
+  appointmentType?: string;
+  preferredDate?: string;
+  preferredTime?: string;
+  type: "contact" | "appointment";
+}
+
+const createTransporter = async (): Promise<Transporter> => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -91,7 +93,6 @@ const createTransporter = async () => {
       },
     });
 
-    // Verify the transporter configuration
     await transporter.verify();
     return transporter;
   } catch (error) {
@@ -100,15 +101,14 @@ const createTransporter = async () => {
   }
 };
 
-// Input validation middleware
-const validateContactForm = [
+const validateContactForm: ValidationChain[] = [
   body("name")
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage("Name must be between 2 and 100 characters")
     .escape(),
   body("email").isEmail().normalizeEmail().withMessage("Please provide a valid email address"),
-  body("phone").optional().isMobilePhone().withMessage("Please provide a valid phone number"),
+  body("phone").optional().isMobilePhone('any').withMessage("Please provide a valid phone number"),
   body("subject")
     .optional()
     .trim()
@@ -135,17 +135,16 @@ const validateContactForm = [
   body("type").isIn(["contact", "appointment"]).withMessage("Invalid form type"),
 ];
 
-// Contact form endpoint
-app.post("/api/contact", validateContactForm, async (req, res) => {
+app.post("/api/contact", validateContactForm, async (req: Request, res: Response): Promise<void> => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: "Validation failed",
         errors: errors.array(),
       });
+      return;
     }
 
     const {
@@ -158,13 +157,12 @@ app.post("/api/contact", validateContactForm, async (req, res) => {
       preferredDate,
       preferredTime,
       type,
-    } = req.body;
+    } = req.body as ContactFormData;
 
-    // Create and verify transporter
     const transporter = await createTransporter();
 
-    // Prepare email content
-    let emailSubject, emailHtml;
+    let emailSubject: string;
+    let emailHtml: string;
 
     if (type === "appointment") {
       emailSubject = `New Appointment Request - ${appointmentType || "General"}`;
@@ -190,7 +188,6 @@ app.post("/api/contact", validateContactForm, async (req, res) => {
       `;
     }
 
-    // Send email
     const info = await transporter.sendMail({
       from: `"MediCare+ Website" <${process.env.GMAIL_USER}>`,
       to: process.env.HOSPITAL_EMAIL || process.env.GMAIL_USER,
@@ -199,7 +196,6 @@ app.post("/api/contact", validateContactForm, async (req, res) => {
       html: emailHtml,
     });
 
-    // Confirmation email to user
     await transporter.sendMail({
       from: `"MediCare+ Hospital" <${process.env.GMAIL_USER}>`,
       to: email,
@@ -221,13 +217,12 @@ app.post("/api/contact", validateContactForm, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to send message. Please try again later.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      error: process.env.NODE_ENV === "development" ? (error as Error).message : undefined,
     });
   }
 });
 
-// Health check endpoint
-app.get("/api/health", (req, res) => {
+app.get("/api/health", (req: Request, res: Response): void => {
   res.status(200).json({
     status: "OK",
     timestamp: new Date().toISOString(),
@@ -235,15 +230,13 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Serve React app in production
 if (process.env.NODE_ENV === "production") {
-  app.get("*", (req, res) => {
+  app.get("*", (req: Request, res: Response): void => {
     res.sendFile(path.join(__dirname, "../dist/index.html"));
   });
 }
 
-// Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
   console.error("Unhandled error:", err);
   res.status(500).json({
     success: false,
@@ -251,8 +244,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler for API routes
-app.use("/api/*", (req, res) => {
+app.use("/api/*", (req: Request, res: Response): void => {
   res.status(404).json({
     success: false,
     message: "API endpoint not found",
@@ -265,4 +257,3 @@ app.listen(PORT, () => {
 });
 
 export default app;
-// server/index.js
