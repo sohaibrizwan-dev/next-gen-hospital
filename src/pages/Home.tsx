@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Heart, Users, Award, Clock, Star, ArrowRight, Calendar, Phone, Shield, Stethoscope, Brain, Baby, Ambulance } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Heart, Users, Award, Clock, Star, ArrowRight, Calendar, Phone, Shield, Stethoscope, Brain, Baby, Ambulance, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { useScrollAnimation } from '../hooks/useScrollAnimation';
 import { doctors, testimonials, services } from '../data/mockData';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination, EffectFade, Navigation } from 'swiper/modules';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import { useState, useEffect } from 'react';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import 'swiper/css/effect-fade';
 import 'swiper/css/navigation';
 
 const Home = () => {
@@ -15,7 +15,60 @@ const Home = () => {
   const whyChooseUsRef = useScrollAnimation();
   const doctorsRef = useScrollAnimation();
   const testimonialsRef = useScrollAnimation();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAutoplayRunning, setIsAutoplayRunning] = useState(true);
 
+  const heroSlides = [
+    {
+      image: 'https://images.pexels.com/photos/5327656/pexels-photo-5327656.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      title: 'World-class Care,',
+      highlight: 'Human Touch',
+      description: 'From routine checkups to complex surgeries, our experts deliver compassionate, evidence-based care.',
+      stats: { label: 'Patient Satisfaction', value: '98%' }
+    },
+    {
+      image: 'https://images.pexels.com/photos/8460151/pexels-photo-8460151.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      title: 'Advanced Technology,',
+      highlight: 'Better Outcomes',
+      description: 'State-of-the-art medical equipment and cutting-edge treatments for superior patient care.',
+      stats: { label: 'Success Rate', value: '95%' }
+    },
+    {
+      image: 'https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      title: 'Expert Specialists,',
+      highlight: 'Your Health',
+      description: 'Board-certified physicians with years of experience dedicated to your wellbeing.',
+      stats: { label: 'Specialists', value: '200+' }
+    }
+  ];
+
+  useEffect(() => {
+    if (!isAutoplayRunning) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isAutoplayRunning, heroSlides.length]);
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+    setIsAutoplayRunning(false);
+    setTimeout(() => setIsAutoplayRunning(true), 10000);
+  };
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    setIsAutoplayRunning(false);
+    setTimeout(() => setIsAutoplayRunning(true), 10000);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+    setIsAutoplayRunning(false);
+    setTimeout(() => setIsAutoplayRunning(true), 10000);
+  };
 
   const iconComponents = {
     Heart,
@@ -27,133 +80,233 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section - Split Layout */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-950">
-        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-blue-200/40 blur-3xl dark:bg-blue-900/20" />
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-12 items-center py-20">
-            <div>
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200 mb-6">
-                <Shield className="w-4 h-4" />
-                <span className="text-sm font-semibold">Trusted by 120,000+ patients</span>
-              </div>
-              <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight">
-                World‑class Care, Human Touch
-              </h1>
-              <p className="mt-6 text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-xl">
-                From routine checkups to complex surgeries, our experts deliver compassionate, evidence‑based care powered by modern technology.
-              </p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <Link to="/contact" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">
-                  <Calendar className="w-5 h-5" />
-                  <span>Book Appointment</span>
-                </Link>
-                <Link to="/services" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 font-semibold transition-colors">
-                  <Stethoscope className="w-5 h-5" />
-                  <span>Explore Services</span>
-                </Link>
-              </div>
-              <div className="mt-10 grid grid-cols-3 gap-4 max-w-md">
-                <div className="rounded-xl bg-white dark:bg-gray-800 p-4 shadow">
-                  <p className="text-3xl font-extrabold text-gray-900 dark:text-white">4.9</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" /> Patient Rating
-                  </p>
-                </div>
-                <div className="rounded-xl bg-white dark:bg-gray-800 p-4 shadow">
-                  <p className="text-3xl font-extrabold text-gray-900 dark:text-white">24/7</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Emergency Care</p>
-                </div>
-                <div className="rounded-xl bg-white dark:bg-gray-800 p-4 shadow">
-                  <p className="text-3xl font-extrabold text-gray-900 dark:text-white">25+</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Years Excellence</p>
-                </div>
-              </div>
-            </div>
-            <div className="relative">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="relative"
-              >
-                <div className="absolute -inset-1 rounded-3xl bg-gradient-to-tr from-blue-500 to-teal-400 opacity-20 blur-2xl z-0" />
-                <div className="relative rounded-3xl overflow-hidden shadow-2xl z-0">
-                  <Swiper
-                    modules={[Autoplay, Pagination, EffectFade]}
-                    slidesPerView={1}
-                    loop
-                    autoplay={{ delay: 4500, disableOnInteraction: false }}
-                    pagination={{ clickable: true }}
-                    effect="fade"
-                    className="w-full h-[520px]"
+      {/* Hero Section - Modern Slider */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 min-h-screen">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl opacity-20 animate-blob" />
+          <div className="absolute top-0 -right-4 w-96 h-96 bg-teal-300 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
+          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-cyan-300 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl opacity-20 animate-blob animation-delay-4000" />
+        </div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="min-h-screen flex items-center py-20">
+            <div className="w-full">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                <div className="lg:col-span-5 space-y-8">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
                   >
-                    <SwiperSlide>
-                      <img
-                        src="https://images.pexels.com/photos/5327656/pexels-photo-5327656.jpeg?auto=compress&cs=tinysrgb&w=1200"
-                        alt="Compassionate doctor"
-                        className="w-full h-full object-cover"
-                        loading="eager"
-                      />
-                    </SwiperSlide>
-                    <SwiperSlide>
-                      <img
-                        src="https://images.pexels.com/photos/8460151/pexels-photo-8460151.jpeg?auto=compress&cs=tinysrgb&w=1200"
-                        alt="Modern operating room"
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </SwiperSlide>
-                    <SwiperSlide>
-                      <img
-                        src="https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=1200"
-                        alt="Lab technology"
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </SwiperSlide>
-                  </Swiper>
-                </div>
-              </motion.div>
+                    <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 mb-6 backdrop-blur-sm">
+                      <Shield className="w-4 h-4" />
+                      <span className="text-sm font-semibold">Trusted by 120,000+ patients</span>
+                    </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
-                className="absolute -bottom-6 -left-4 bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-xl flex items-center gap-3 z-10"
-              >
-                <Users className="w-8 h-8 text-blue-600" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Patients cared</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">120,000+</p>
-                </div>
-              </motion.div>
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={currentSlide}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-gray-900 dark:text-white leading-tight">
+                          {heroSlides[currentSlide].title}
+                          <span className="block bg-gradient-to-r from-blue-600 to-teal-600 dark:from-blue-400 dark:to-teal-400 text-transparent bg-clip-text">
+                            {heroSlides[currentSlide].highlight}
+                          </span>
+                        </h1>
+                        <p className="mt-6 text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-xl leading-relaxed">
+                          {heroSlides[currentSlide].description}
+                        </p>
+                      </motion.div>
+                    </AnimatePresence>
+                  </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35, duration: 0.6 }}
-                className="absolute top-6 -right-4 bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-xl flex items-center gap-3 z-10"
-              >
-                <Shield className="w-8 h-8 text-teal-600" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Accredited</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">Internationally</p>
-                </div>
-              </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="flex flex-col sm:flex-row gap-4"
+                  >
+                    <Link
+                      to="/contact"
+                      className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                    >
+                      <Calendar className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                      <span>Book Appointment</span>
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                    <Link
+                      to="/services"
+                      className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-700 hover:border-blue-600 dark:hover:border-blue-500 font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+                    >
+                      <Stethoscope className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                      <span>Explore Services</span>
+                    </Link>
+                  </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-                className="absolute bottom-24 -right-6 bg-red-600 text-white p-4 rounded-2xl shadow-xl flex items-center gap-3 z-10"
-              >
-                <Heart className="w-6 h-6" />
-                <div>
-                  <p className="text-sm text-red-100">Emergency</p>
-                  <p className="text-lg font-bold">Call 24/7</p>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                    className="grid grid-cols-3 gap-4 max-w-lg"
+                  >
+                    <div className="group rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                      </div>
+                      <p className="text-3xl font-extrabold text-gray-900 dark:text-white">4.9</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Patient Rating</p>
+                    </div>
+                    <div className="group rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <p className="text-3xl font-extrabold text-gray-900 dark:text-white">24/7</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Emergency</p>
+                    </div>
+                    <div className="group rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Award className="w-5 h-5 text-teal-600" />
+                      </div>
+                      <p className="text-3xl font-extrabold text-gray-900 dark:text-white">25+</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Years</p>
+                    </div>
+                  </motion.div>
                 </div>
-              </motion.div>
+
+                <div className="lg:col-span-7 relative">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.8 }}
+                    className="relative"
+                  >
+                    <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 via-teal-500 to-cyan-500 rounded-3xl opacity-20 blur-3xl" />
+
+                    <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+                      <div className="relative h-[500px] lg:h-[600px]">
+                        <AnimatePresence mode="wait">
+                          <motion.img
+                            key={currentSlide}
+                            src={heroSlides[currentSlide].image}
+                            alt={heroSlides[currentSlide].title}
+                            className="w-full h-full object-cover"
+                            initial={{ opacity: 0, scale: 1.1 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.7, ease: "easeInOut" }}
+                            loading={currentSlide === 0 ? "eager" : "lazy"}
+                          />
+                        </AnimatePresence>
+
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+
+                        <div className="absolute bottom-0 left-0 right-0 p-8">
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key={currentSlide}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              transition={{ duration: 0.5 }}
+                              className="flex items-center justify-between"
+                            >
+                              <div className="backdrop-blur-md bg-white/20 dark:bg-black/30 rounded-2xl px-6 py-4 border border-white/30">
+                                <p className="text-white/90 text-sm font-medium mb-1">
+                                  {heroSlides[currentSlide].stats.label}
+                                </p>
+                                <p className="text-white text-3xl font-bold">
+                                  {heroSlides[currentSlide].stats.value}
+                                </p>
+                              </div>
+                            </motion.div>
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-6 bg-white dark:bg-gray-900 rounded-full px-6 py-4 shadow-2xl border border-gray-100 dark:border-gray-800">
+                      <button
+                        onClick={prevSlide}
+                        className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all duration-300 group"
+                        aria-label="Previous slide"
+                      >
+                        <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-white transition-colors" />
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        {heroSlides.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => goToSlide(index)}
+                            className="relative group"
+                            aria-label={`Go to slide ${index + 1}`}
+                          >
+                            <div
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                index === currentSlide
+                                  ? 'w-8 bg-blue-600'
+                                  : 'w-2 bg-gray-300 dark:bg-gray-600 hover:bg-blue-400'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={nextSlide}
+                        className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all duration-300 group"
+                        aria-label="Next slide"
+                      >
+                        <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-white transition-colors" />
+                      </button>
+
+                      <button
+                        onClick={() => setIsAutoplayRunning(!isAutoplayRunning)}
+                        className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all duration-300 group ml-2"
+                        aria-label={isAutoplayRunning ? "Pause autoplay" : "Resume autoplay"}
+                      >
+                        {isAutoplayRunning ? (
+                          <Pause className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-white transition-colors" />
+                        ) : (
+                          <Play className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-white transition-colors" />
+                        )}
+                      </button>
+                    </div>
+
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.4, duration: 0.6 }}
+                      className="absolute -top-6 -left-6 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 hidden lg:flex items-center gap-4"
+                    >
+                      <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-xl">
+                        <Users className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Patients Cared</p>
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">120,000+</p>
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.6, duration: 0.6 }}
+                      className="absolute top-6 -right-6 bg-gradient-to-br from-red-500 to-red-600 text-white p-5 rounded-2xl shadow-2xl hidden lg:flex items-center gap-4"
+                    >
+                      <Heart className="w-6 h-6" />
+                      <div>
+                        <p className="text-sm text-red-100 font-medium">Emergency</p>
+                        <p className="text-xl font-bold">24/7 Care</p>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
